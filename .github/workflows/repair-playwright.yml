@@ -1,0 +1,77 @@
+name: Repair Playwright Folders
+
+on:
+  push:
+    paths:
+      - '.github/workflows/repair-playwright.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix folder structure
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          move_file() {
+            target="$1"
+            filename="${target##*/}"
+
+            if [ -f "$target" ]; then
+              echo "Already correct: $target"
+              return
+            fi
+
+            source=""
+            while IFS= read -r path; do
+              if [ "${path##*/}" = "$filename" ]; then
+                source="$path"
+                break
+              fi
+            done < <(git ls-files)
+
+            if [ -n "$source" ]; then
+              mkdir -p "$(dirname "$target")"
+              git mv "$source" "$target"
+              echo "Moved $source to $target"
+            else
+              echo "WARNING: Missing $filename"
+            fi
+          }
+
+          move_file tests/e2e/login.spec.ts
+          move_file tests/e2e/cart.spec.ts
+          move_file tests/e2e/checkout.spec.ts
+          move_file tests/e2e/inventory.spec.ts
+          move_file tests/api/catalog.contract.spec.ts
+          move_file tests/fixtures.ts
+          move_file tests/seed.spec.ts
+
+          move_file pages/LoginPage.ts
+          move_file pages/CartPage.ts
+          move_file pages/CheckoutPage.ts
+          move_file pages/InventoryPage.ts
+
+          move_file test-data/demoData.ts
+          move_file docs/AI_WORKFLOW.md
+          move_file scripts/audit-test-quality.mjs
+          move_file specs/saucedemo-regression.md
+
+          git add -A
+
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Fix Playwright project folder structure"
+            git push
+          else
+            echo "No changes needed"
+          fi
