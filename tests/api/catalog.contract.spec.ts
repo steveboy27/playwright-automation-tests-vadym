@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+Fimport { test, expect } from '@playwright/test';
 import { createServer, type Server } from 'node:http';
 import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
@@ -97,7 +97,7 @@ test.describe('Mock catalog API contracts', () => {
 
   test('@regression rejects invalid JSON safely', async ({ request }) => {
     const invalid = await request.post(`${endpoint}/api/products`, {
-      data: '{invalid',
+      data: Buffer.from('{invalid'),
       headers: { 'content-type': 'application/json' },
     });
     expect(invalid.status()).toBe(400);
